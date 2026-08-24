@@ -75,6 +75,7 @@ public class SecurityConfig {
                                                 .permitAll()
 
                                                 .anyRequest().authenticated())
+
                                 // =========================
                                 // DISABLE FORM LOGIN
                                 // =========================
@@ -109,9 +110,8 @@ public class SecurityConfig {
 
                 configuration.setAllowedOrigins(
                                 List.of(
-    "http://localhost:5173",
-    "https://ticket-booking-system-beige-ten.vercel.app"
-)
+                                                "http://localhost:5173",
+                                                "https://ticket-booking-system-beige-ten.vercel.app"));
 
                 configuration.setAllowedMethods(
                                 List.of(
