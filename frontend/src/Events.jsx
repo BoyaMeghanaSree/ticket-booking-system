@@ -322,70 +322,74 @@ function Events({ onLogout }) {
   // =========================
   // CONFIRM BOOKING
   // =========================
-
-  const confirmBooking = async () => {
-  if (!selectedSeatId) {
-    setMessage("Please select and hold a seat first.");
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-
-    // IMPORTANT
-    if (!token) {
-      setMessage("Please login again.");
-      return;
+const confirmBooking = async () => {
+    if (!selectedSeatId) {
+        setMessage("Please select and hold a seat first.");
+        return;
     }
 
-    if (!userId || userId === "null" || userId === "undefined") {
-      setMessage("User ID missing. Please logout and login again.");
-      console.error("Missing userId:", userId);
-      return;
-    }
+    try {
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
 
-    console.log("Confirm booking:", {
-      eventSeatId: selectedSeatId,
-      userId: userId
-    });
-
-    const response = await fetch(
-      `/api/bookings/confirm?eventSeatId=${selectedSeatId}&userId=${userId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+        if (!token) {
+            setMessage("Please login again.");
+            return;
         }
-      }
-    );
 
-    const responseText = await response.text();
+        if (!userId || userId === "null" || userId === "undefined") {
+            setMessage("User ID missing. Please logout and login again.");
+            console.error("Missing userId:", userId);
+            return;
+        }
 
-    console.log("Confirm response:", response.status, responseText);
+        console.log("Confirm booking:", {
+            eventSeatId: selectedSeatId,
+            userId: userId
+        });
 
-    if (!response.ok) {
-      setMessage(
-        responseText || `Booking failed (${response.status})`
-      );
-      return;
+        const response = await fetch(
+            `/api/bookings/confirm?eventSeatId=${selectedSeatId}&userId=${userId}`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        const responseText = await response.text();
+
+        console.log(
+            "Confirm response:",
+            response.status,
+            responseText
+        );
+
+        if (!response.ok) {
+            setMessage(
+                responseText ||
+                `Booking failed (${response.status})`
+            );
+            return;
+        }
+
+        const data = JSON.parse(responseText);
+
+        console.log("BOOKING SUCCESS:", data);
+
+        setBooking(data);
+        setSelectedSeatId(null);
+
+        setMessage("Booking confirmed successfully!");
+
+        await loadSeats(selectedEvent.id);
+
+    } catch (error) {
+        console.error("CONFIRM BOOKING ERROR:", error);
+        setMessage("Unable to connect to server");
     }
-
-    const data = JSON.parse(responseText);
-
-    console.log("BOOKING SUCCESS:", data);
-
-    setBooking(data);
-    setSelectedSeatId(null);
-    setMessage("Booking confirmed successfully!");
-
-    await loadSeats(selectedEvent.id);
-
-  } catch (error) {
-    console.error("CONFIRM BOOKING ERROR:", error);
-    setMessage("Unable to connect to server");
-  }
 };
 
   // =========================
