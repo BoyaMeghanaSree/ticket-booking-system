@@ -4,7 +4,7 @@ A full-stack ticket booking platform for movies and concerts. The system allows 
 
 The system also provides separate roles for Customer, Organiser, and Admin.
 
----
+
 
 ## Features
 
