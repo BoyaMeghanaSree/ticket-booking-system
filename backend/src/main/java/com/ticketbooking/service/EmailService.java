@@ -3,11 +3,11 @@ package com.ticketbooking.service;
 import com.ticketbooking.entity.Booking;
 import com.ticketbooking.entity.EventSeat;
 import com.ticketbooking.entity.Waitlist;
-
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -35,21 +35,15 @@ public class EmailService {
         // BOOKING CONFIRMATION EMAIL
         // =====================================================
 
-        public void sendBookingConfirmation(
-                        Booking booking) {
+        public void sendBookingConfirmation(Booking booking) {
 
                 try {
 
                         String bookingReference = "BOOKING-" + booking.getId();
 
+                        // Generate QR
                         byte[] qrCode = qrCodeService.generateQrCode(
                                         bookingReference);
-
-                        MimeMessage message = mailSender.createMimeMessage();
-
-                        MimeMessageHelper helper = new MimeMessageHelper(
-                                        message,
-                                        true);
 
                         String customerEmail = booking.getUser().getEmail();
 
@@ -57,8 +51,7 @@ public class EmailService {
 
                         EventSeat eventSeat = booking.getEventSeat();
 
-                        String seatNumber = eventSeat.getSeat()
-                                        .getSeatNumber();
+                        String seatNumber = eventSeat.getSeat().getSeatNumber();
 
                         String category = eventSeat.getSeat()
                                         .getCategory()
@@ -69,6 +62,16 @@ public class EmailService {
                                                         DateTimeFormatter.ofPattern(
                                                                         "dd-MM-yyyy HH:mm"));
 
+                        MimeMessage message = mailSender.createMimeMessage();
+
+                        MimeMessageHelper helper = new MimeMessageHelper(
+                                        message,
+                                        true);
+
+                        // IMPORTANT
+                        helper.setFrom(
+                                        System.getenv("MAIL_USERNAME"));
+
                         helper.setTo(customerEmail);
 
                         helper.setSubject(
@@ -77,7 +80,6 @@ public class EmailService {
 
                         String emailBody = "<html>"
                                         + "<body>"
-
                                         + "<h2>Ticket Booking Confirmed</h2>"
 
                                         + "<p>Dear "
@@ -105,22 +107,16 @@ public class EmailService {
                                         + category
                                         + "</p>"
 
-                                        + "<p><b>Price:</b> ₹"
-                                        + booking.getPrice()
-                                        + "</p>"
-
                                         + "<p><b>Booked At:</b> "
                                         + bookedAt
                                         + "</p>"
 
-                                        + "<p>Please find your QR code "
-                                        + "ticket attached to this email.</p>"
+                                        + "<p><b>Price:</b> ₹"
+                                        + booking.getPrice()
+                                        + "</p>"
 
-                                        + "<p>Please show the QR code "
-                                        + "at the venue.</p>"
-
-                                        + "<p>Thank you for using "
-                                        + "Ticket Booking.</p>"
+                                        + "<p>The QR code ticket "
+                                        + "is attached to this email.</p>"
 
                                         + "</body>"
                                         + "</html>";
@@ -129,21 +125,49 @@ public class EmailService {
                                         emailBody,
                                         true);
 
+                        // Attach QR
                         helper.addAttachment(
                                         bookingReference + ".png",
-                                        () -> new java.io.ByteArrayInputStream(
-                                                        qrCode));
+                                        new ByteArrayResource(qrCode));
 
+                        // SEND
                         mailSender.send(message);
 
-                } catch (MessagingException e) {
+                        System.out.println(
+                                        "====================================");
+
+                        System.out.println(
+                                        "BOOKING EMAIL SENT SUCCESSFULLY");
+
+                        System.out.println(
+                                        "To: " + customerEmail);
+
+                        System.out.println(
+                                        "QR Attachment: "
+                                                        + bookingReference
+                                                        + ".png");
+
+                        System.out.println(
+                                        "====================================");
+
+                } catch (Exception e) {
+
+                        System.err.println(
+                                        "====================================");
+
+                        System.err.println(
+                                        "BOOKING EMAIL FAILED");
+
+                        e.printStackTrace();
+
+                        System.err.println(
+                                        "====================================");
 
                         throw new RuntimeException(
                                         "Failed to send booking confirmation email",
                                         e);
                 }
         }
-
         // =====================================================
         // WAITLIST OFFER EMAIL
         // =====================================================
