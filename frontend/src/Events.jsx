@@ -8,7 +8,7 @@ function Events({ onLogout }) {
   const [message, setMessage] = useState("Loading events...");
   const [selectedSeatId, setSelectedSeatId] = useState(null);
   const [booking, setBooking] = useState(null);
-
+const [confirming, setConfirming] = useState(false);
   const [showBookings, setShowBookings] = useState(false);
   const [bookings, setBookings] = useState([]);
 
@@ -323,73 +323,86 @@ function Events({ onLogout }) {
   // CONFIRM BOOKING
   // =========================
 const confirmBooking = async () => {
-    if (!selectedSeatId) {
-        setMessage("Please select and hold a seat first.");
-        return;
+  if (!selectedSeatId) {
+    setMessage("Please select and hold a seat first.");
+    return;
+  }
+
+  // Prevent double-click / multiple requests
+  if (confirming) {
+    return;
+  }
+
+  setConfirming(true);
+
+  try {
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
+
+    if (!token || !userId) {
+      setMessage("Please login again.");
+      return;
     }
 
-    try {
-        const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("userId");
+    console.log("Confirm booking:", {
+      eventSeatId: selectedSeatId,
+      userId: userId
+    });
 
-        if (!token) {
-            setMessage("Please login again.");
-            return;
+    const response = await fetch(
+      `/api/bookings/confirm?eventSeatId=${selectedSeatId}&userId=${userId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
         }
+      }
+    );
 
-        if (!userId || userId === "null" || userId === "undefined") {
-            setMessage("User ID missing. Please logout and login again.");
-            console.error("Missing userId:", userId);
-            return;
-        }
+    const responseText = await response.text();
 
-        console.log("Confirm booking:", {
-            eventSeatId: selectedSeatId,
-            userId: userId
-        });
+    console.log(
+      "Confirm response:",
+      response.status,
+      responseText
+    );
 
-        const response = await fetch(
-            `/api/bookings/confirm?eventSeatId=${selectedSeatId}&userId=${userId}`,
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-
-        const responseText = await response.text();
-
-        console.log(
-            "Confirm response:",
-            response.status,
-            responseText
-        );
-
-        if (!response.ok) {
-            setMessage(
-                responseText ||
-                `Booking failed (${response.status})`
-            );
-            return;
-        }
-
-        const data = JSON.parse(responseText);
-
-        console.log("BOOKING SUCCESS:", data);
-
-        setBooking(data);
-        setSelectedSeatId(null);
-
-        setMessage("Booking confirmed successfully!");
-
-        await loadSeats(selectedEvent.id);
-
-    } catch (error) {
-        console.error("CONFIRM BOOKING ERROR:", error);
-        setMessage("Unable to connect to server");
+    if (!response.ok) {
+      setMessage(
+        responseText || "Unable to confirm booking"
+      );
+      return;
     }
+
+    const data = JSON.parse(responseText);
+
+    console.log("BOOKING SUCCESS:", data);
+
+    setBooking(data);
+    setSelectedSeatId(null);
+
+    setMessage(
+      "Booking confirmed successfully!"
+    );
+
+    await loadSeats(selectedEvent.id);
+
+  } catch (error) {
+
+    console.error(
+      "CONFIRM BOOKING ERROR:",
+      error
+    );
+
+    setMessage(
+      "Unable to confirm booking"
+    );
+
+  } finally {
+
+    setConfirming(false);
+  }
 };
 
   // =========================
@@ -986,15 +999,12 @@ const myStandardWaitlist =
                   </p>
 
                   <button
-                    className="confirm-button"
-                    onClick={() =>
-                      acceptWaitlistOffer(
-                        standardOffer.id
-                      )
-                    }
-                  >
-                    Accept Seat Offer
-                  </button>
+  className="confirm-button"
+  onClick={confirmBooking}
+  disabled={confirming}
+>
+  {confirming ? "Booking..." : "Confirm Booking"}
+</button>
 
                 </div>
 
