@@ -1183,6 +1183,55 @@ const myStandardWaitlist =
 
               </div>
 
+              {booking.qrCode && (
+
+                <div
+                  className="qr-section"
+                  style={{
+                    marginTop: "24px",
+                    padding: "20px",
+                    textAlign: "center",
+                    borderRadius: "12px",
+                    background: "#f8f8f8"
+                  }}
+                >
+
+                  <h3>Ticket QR Code</h3>
+
+                  <img
+                    src={booking.qrCode}
+                    alt={`QR Code for Booking ${booking.bookingId}`}
+                    style={{
+                      width: "300px",
+                      height: "300px",
+                      maxWidth: "100%",
+                      display: "block",
+                      margin: "15px auto"
+                    }}
+                  />
+
+                  <p>Scan this QR code at the venue.</p>
+
+                  <a
+                    href={booking.qrCode}
+                    download={`BOOKING-${booking.bookingId}.png`}
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 18px",
+                      borderRadius: "8px",
+                      background: "#222",
+                      color: "white",
+                      textDecoration: "none",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Download QR
+                  </a>
+
+                </div>
+
+              )}
+
               <button
                 className="book-button"
                 onClick={() => {

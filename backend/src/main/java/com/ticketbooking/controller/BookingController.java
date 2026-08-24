@@ -5,16 +5,16 @@ import com.ticketbooking.dto.BookingSummaryResponse;
 import com.ticketbooking.entity.Booking;
 import com.ticketbooking.entity.BookingStatus;
 import com.ticketbooking.entity.Event;
-
 import com.ticketbooking.repository.BookingRepository;
 import com.ticketbooking.repository.EventRepository;
-
 import com.ticketbooking.service.BookingService;
+import com.ticketbooking.service.QrCodeService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -24,15 +24,18 @@ public class BookingController {
         private final BookingService bookingService;
         private final BookingRepository bookingRepository;
         private final EventRepository eventRepository;
+        private final QrCodeService qrCodeService;
 
         public BookingController(
                         BookingService bookingService,
                         BookingRepository bookingRepository,
-                        EventRepository eventRepository) {
+                        EventRepository eventRepository,
+                        QrCodeService qrCodeService) {
 
                 this.bookingService = bookingService;
                 this.bookingRepository = bookingRepository;
                 this.eventRepository = eventRepository;
+                this.qrCodeService = qrCodeService;
         }
 
         // =====================================================
@@ -51,6 +54,23 @@ public class BookingController {
                                         userId);
 
                         BookingResponse response = new BookingResponse(booking);
+
+                        // =====================================================
+                        // GENERATE QR CODE
+                        // =====================================================
+
+                        String bookingReference = "BOOKING-" + booking.getId();
+
+                        byte[] qrBytes = qrCodeService.generateQrCode(
+                                        bookingReference);
+
+                        String qrBase64 = Base64.getEncoder()
+                                        .encodeToString(qrBytes);
+
+                        String qrDataUrl = "data:image/png;base64,"
+                                        + qrBase64;
+
+                        response.setQrCode(qrDataUrl);
 
                         return ResponseEntity
                                         .status(HttpStatus.CREATED)

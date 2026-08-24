@@ -25,6 +25,9 @@ public class BookingResponse {
     private String status;
     private LocalDateTime bookedAt;
 
+    // QR code as Base64 data URL
+    private String qrCode;
+
     public BookingResponse(Booking booking) {
 
         this.bookingId = booking.getId();
@@ -105,5 +108,13 @@ public class BookingResponse {
 
     public LocalDateTime getBookedAt() {
         return bookedAt;
+    }
+
+    public String getQrCode() {
+        return qrCode;
+    }
+
+    public void setQrCode(String qrCode) {
+        this.qrCode = qrCode;
     }
 }
